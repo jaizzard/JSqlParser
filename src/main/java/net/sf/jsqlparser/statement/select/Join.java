@@ -41,6 +41,7 @@ public class Join extends ASTNodeAccessImpl {
     private boolean simple = false;
     private boolean cross = false;
     private boolean semi = false;
+    private boolean anti = false;
     private FromItem rightItem;
     private Expression onExpression;
     private List<Column> usingColumns;
@@ -158,6 +159,19 @@ public class Join extends ASTNodeAccessImpl {
     }
 
     /**
+     * Whether is an "ANTI" join
+     *
+     * @return true if is an "ANTI" join
+     */
+    public boolean isAnti() {
+        return anti;
+    }
+
+    public void setAnti(boolean anti) {
+        this.anti = anti;
+    }
+
+    /**
      * Returns the right item of the join
      */
     public FromItem getRightItem() {
@@ -215,6 +229,8 @@ public class Join extends ASTNodeAccessImpl {
                 type += "INNER ";
             } else if (isSemi()) {
                 type += "SEMI ";
+            } else if (isAnti()) {
+                type += "ANTI ";
             }
 
             return type + "JOIN " + rightItem + ((onExpression != null) ? " ON " + onExpression + "" : "")

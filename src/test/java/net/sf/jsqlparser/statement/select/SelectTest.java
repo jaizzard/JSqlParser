@@ -966,6 +966,21 @@ public class SelectTest {
         select = (Select) parserManager.parse(new StringReader(statement));
         assertStatementCanBeDeparsedAs(select, statement);
 
+        statement = "SELECT * FROM table1 AS t1 LEFT SEMI JOIN table2 AS t2 ON t1.id = t2.id";
+        select = (Select) parserManager.parse(new StringReader(statement));
+        assertStatementCanBeDeparsedAs(select, statement);
+
+        statement = "SELECT * FROM table1 AS t1 LEFT ANTI JOIN table2 AS t2 ON t1.id = t2.id";
+        select = (Select) parserManager.parse(new StringReader(statement));
+        assertStatementCanBeDeparsedAs(select, statement);
+
+        statement = "SELECT * FROM table1 AS t1 RIGHT ANTI JOIN table2 AS t2 ON t1.id = t2.id";
+        select = (Select) parserManager.parse(new StringReader(statement));
+        assertStatementCanBeDeparsedAs(select, statement);
+
+        statement = "SELECT * FROM table1 AS t1 RIGHT SEMI JOIN table2 AS t2 ON t1.id = t2.id";
+        select = (Select) parserManager.parse(new StringReader(statement));
+        assertStatementCanBeDeparsedAs(select, statement);
     }
 
     @Test
