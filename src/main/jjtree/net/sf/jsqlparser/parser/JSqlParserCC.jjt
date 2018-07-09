@@ -1489,6 +1489,7 @@ FromItem FromItem():
     Pivot pivot = null;
     Alias alias = null;
     MySQLIndexHint indexHint = null;
+    ImpalaHint impalaHint = null;
 }
 {
     (
@@ -1527,6 +1528,12 @@ FromItem FromItem():
 						((Table) fromItem).setHint(indexHint);
                 }
             ]
+
+            { impalaHint = getImpalaHint();
+                if (fromItem instanceof Table)
+                  ((Table) fromItem).setImpalaHint(impalaHint);
+            }
+
         )
     )
     {
@@ -1659,6 +1666,11 @@ Join JoinerExpression() #JoinerExpression:
     ]
 
     ( <K_JOIN> | "," { join.setSimple(true); } )
+
+    { impalaHint = getImpalaHint();
+        if (fromItem instanceof Table)
+            ((Table) fromItem).setImpalaHint(impalaHint);
+    }
 
     right=FromItem()
 
@@ -1952,6 +1964,23 @@ OracleHint getOracleHint() {
     // Check if it matches Hint pattern?
     if (OracleHint.isHintMatch(tok.image)) {
       hint = new OracleHint();
+      hint.setComment(tok.image);
+    }
+  }
+  return hint;
+}
+
+JAVACODE
+ImpalaHint getImpalaHint() {
+  ImpalaHint hint = null;
+  Token tok = getToken(1);
+  // Retrieve first comment (if any) prior next token
+  if (tok.specialToken != null) {
+    tok = tok.specialToken;
+    while (tok.specialToken != null) tok = tok.specialToken;
+    // Check if it matches Hint pattern?
+    if (ImpalaHint.isHintMatch(tok.image)) {
+      hint = new ImpalaHint();
       hint.setComment(tok.image);
     }
   }

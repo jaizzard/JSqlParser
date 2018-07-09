@@ -24,6 +24,7 @@ package net.sf.jsqlparser.statement.select;
 import java.util.List;
 
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.ImpalaHint;
 import net.sf.jsqlparser.parser.ASTNodeAccessImpl;
 import net.sf.jsqlparser.schema.Column;
 
@@ -45,6 +46,7 @@ public class Join extends ASTNodeAccessImpl {
     private FromItem rightItem;
     private Expression onExpression;
     private List<Column> usingColumns;
+    private ImpalaHint impalaHint = null;
 
     /**
      * Whether is a tab1,tab2 join
@@ -204,6 +206,14 @@ public class Join extends ASTNodeAccessImpl {
         usingColumns = list;
     }
 
+    public ImpalaHint getImpalaHint() {
+        return impalaHint;
+    }
+
+    public void setImpalaHint(ImpalaHint impalaHint) {
+        this.impalaHint = impalaHint;
+    }
+
     @Override
     public String toString() {
         if (isSimple()) {
@@ -233,7 +243,7 @@ public class Join extends ASTNodeAccessImpl {
                 type += "ANTI ";
             }
 
-            return type + "JOIN " + rightItem + ((onExpression != null) ? " ON " + onExpression + "" : "")
+            return type + "JOIN " + ((impalaHint != null) ? impalaHint.toString() + " " : "") + rightItem + ((onExpression != null) ? " ON " + onExpression + "" : "")
                     + PlainSelect.getFormatedList(usingColumns, "USING", true, true);
         }
 

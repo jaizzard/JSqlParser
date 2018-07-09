@@ -174,6 +174,8 @@ public interface ExpressionVisitor {
 
     void visit(OracleHint hint);
 
+    void visit(ImpalaHint hint);
+
     void visit(TimeKeyExpression timeKeyExpression);
 
     void visit(DateTimeLiteralExpression literal);

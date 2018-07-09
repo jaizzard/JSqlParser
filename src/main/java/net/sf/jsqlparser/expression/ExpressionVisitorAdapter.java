@@ -491,6 +491,11 @@ public class ExpressionVisitorAdapter implements ExpressionVisitor, ItemsListVis
     }
 
     @Override
+    public void visit(ImpalaHint hint) {
+
+    }
+
+    @Override
     public void visit(TimeKeyExpression timeKeyExpression) {
 
     }
