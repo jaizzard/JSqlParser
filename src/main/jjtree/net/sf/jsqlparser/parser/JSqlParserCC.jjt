@@ -265,6 +265,7 @@ TOKEN: /* SQL Keywords. prefixed with K_ to avoid name clashes */
 |   <K_SKIP: "SKIP">
 |   <K_SOME:"SOME">
 |   <K_START:"START">
+|   <K_STRAIGHT_JOIN : "STRAIGHT_JOIN">
 |   <K_TABLE:"TABLE">
 |   <K_TABLESPACE : "TABLESPACE">
 |   <K_THEN:"THEN">
@@ -1135,6 +1136,8 @@ PlainSelect PlainSelect() #PlainSelect:
                 <K_SQL_NO_CACHE> { plainSelect.setMySqlSqlNoCache(true); }
             )
     ]
+
+    [<K_STRAIGHT_JOIN> {StraightJoin straightJoin = new StraightJoin(); plainSelect.setStraightJoin(straightJoin); } ]
 
     [top = Top() { plainSelect.setTop(top);    } ]
 

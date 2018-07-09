@@ -96,6 +96,11 @@ public class SelectDeParser implements SelectVisitor, SelectItemVisitor, FromIte
 
         }
 
+        StraightJoin straightJoin = plainSelect.getStraightJoin();
+        if (straightJoin != null) {
+            buffer.append(straightJoin).append(" ");
+        }
+
         Top top = plainSelect.getTop();
         if (top != null) {
             buffer.append(top).append(" ");

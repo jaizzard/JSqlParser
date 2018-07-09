@@ -39,6 +39,7 @@ public class PlainSelect extends ASTNodeAccessImpl implements SelectBody {
 
     private All all = null;
     private Distinct distinct = null;
+    private StraightJoin straightJoin = null;
     private List<SelectItem> selectItems;
     private List<Table> intoTables;
     private FromItem fromItem;
@@ -210,6 +211,14 @@ public class PlainSelect extends ASTNodeAccessImpl implements SelectBody {
         this.distinct = distinct;
     }
 
+    public StraightJoin getStraightJoin() {
+        return straightJoin;
+    }
+
+    public void setStraightJoin(StraightJoin straightJoin) {
+        this.straightJoin = straightJoin;
+    }
+
     public Expression getHaving() {
         return having;
     }
@@ -321,6 +330,9 @@ public class PlainSelect extends ASTNodeAccessImpl implements SelectBody {
             sql.append(all).append(" ");
         } else if (distinct != null) {
             sql.append(distinct).append(" ");
+        }
+        if (straightJoin != null) {
+            sql.append(straightJoin).append(" ");
         }
         if (top != null) {
             sql.append(top).append(" ");

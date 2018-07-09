@@ -898,6 +898,21 @@ public class SelectTest {
     }
 
     @Test
+    public void testStraightJoin() throws JSQLParserException {
+        String statement = "SELECT STRAIGHT_JOIN myid, mycol FROM mytable";
+        Select select = (Select) parserManager.parse(new StringReader(statement));
+        assertStatementCanBeDeparsedAs(select, statement);
+
+        statement = "SELECT ALL STRAIGHT_JOIN myid, mycol FROM mytable";
+        select = (Select) parserManager.parse(new StringReader(statement));
+        assertStatementCanBeDeparsedAs(select, statement);
+
+        statement = "SELECT DISTINCT STRAIGHT_JOIN myid, mycol FROM mytable";
+        select = (Select) parserManager.parse(new StringReader(statement));
+        assertStatementCanBeDeparsedAs(select, statement);
+    }
+
+    @Test
     public void testFrom() throws JSQLParserException {
         String statement = "SELECT * FROM mytable as mytable0, mytable1 alias_tab1, mytable2 as alias_tab2, (SELECT * FROM mytable3) AS mytable4 WHERE mytable.col = 9";
         String statementToString = "SELECT * FROM mytable AS mytable0, mytable1 alias_tab1, mytable2 AS alias_tab2, (SELECT * FROM mytable3) AS mytable4 WHERE mytable.col = 9";
