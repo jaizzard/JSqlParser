@@ -37,6 +37,7 @@ import java.util.List;
  */
 public class PlainSelect extends ASTNodeAccessImpl implements SelectBody {
 
+    private All all = null;
     private Distinct distinct = null;
     private List<SelectItem> selectItems;
     private List<Table> intoTables;
@@ -193,6 +194,14 @@ public class PlainSelect extends ASTNodeAccessImpl implements SelectBody {
         this.first = first;
     }
 
+    public All getAll() {
+        return all;
+    }
+
+    public void setAll(All all) {
+        this.all = all;
+    }
+
     public Distinct getDistinct() {
         return distinct;
     }
@@ -308,7 +317,9 @@ public class PlainSelect extends ASTNodeAccessImpl implements SelectBody {
             sql.append(first).append(" ");
         }
 
-        if (distinct != null) {
+        if (all != null) {
+            sql.append(all).append(" ");
+        } else if (distinct != null) {
             sql.append(distinct).append(" ");
         }
         if (top != null) {

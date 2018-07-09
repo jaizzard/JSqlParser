@@ -1116,7 +1116,7 @@ PlainSelect PlainSelect() #PlainSelect:
     [LOOKAHEAD(2) first = First() { plainSelect.setFirst(first); } ]
 
     [
-        <K_ALL>
+        <K_ALL> { All all = new All(); plainSelect.setAll(all); }
         |
             (
                 <K_DISTINCT> { Distinct distinct = new Distinct(); plainSelect.setDistinct(distinct); }

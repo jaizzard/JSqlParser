@@ -849,6 +849,13 @@ public class SelectTest {
     }
 
     @Test
+    public void testAll() throws JSQLParserException {
+        String statement = "SELECT ALL myid, mycol FROM mytable";
+        Select select = (Select) parserManager.parse(new StringReader(statement));
+        assertStatementCanBeDeparsedAs(select, statement);
+    }
+
+    @Test
     public void testDistinct() throws JSQLParserException {
         String statement = "SELECT DISTINCT ON (myid) myid, mycol FROM mytable WHERE mytable.col = 9";
         Select select = (Select) parserManager.parse(new StringReader(statement));
