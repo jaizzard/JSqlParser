@@ -1641,6 +1641,7 @@ Join JoinerExpression() #JoinerExpression:
     Expression onExpression = null;
     Column tableColumn;
     List<Column> columns = null;
+    ImpalaHint impalaHint = null;
 }
 {
     [
@@ -1668,8 +1669,7 @@ Join JoinerExpression() #JoinerExpression:
     ( <K_JOIN> | "," { join.setSimple(true); } )
 
     { impalaHint = getImpalaHint();
-        if (fromItem instanceof Table)
-            ((Table) fromItem).setImpalaHint(impalaHint);
+        join.setImpalaHint(impalaHint);
     }
 
     right=FromItem()
