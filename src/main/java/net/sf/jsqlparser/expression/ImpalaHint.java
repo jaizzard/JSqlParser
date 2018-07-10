@@ -23,16 +23,19 @@ package net.sf.jsqlparser.expression;
 
 import net.sf.jsqlparser.parser.ASTNodeAccessImpl;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// TODO: Single line comment not workking
 public class ImpalaHint extends ASTNodeAccessImpl implements Expression {
     private String value = "";
     private Type type = null;
 
+    private List<String> hints = new ArrayList<>();
+
     public enum Type {
-        SINGLE_LINE(Pattern.compile("--\\s*\\+\\s*([^\\W\\n\\r]+(\\,[^\\W\\n\\r]+)*)"), "-- +%s"),
+        SINGLE_LINE(Pattern.compile("--\\s*\\+\\s*([^\\W\\n\\r]+(\\,[^\\W\\n\\r]+)*)"), "-- +%s\n"),
         MULTI_LINE(Pattern.compile("\\/\\*\\s*\\+\\s*(\\w+(\\,\\w+)*)\\s*\\*\\/"), "/* +%s */");
 
         private final Pattern pattern;
@@ -93,6 +96,14 @@ public class ImpalaHint extends ASTNodeAccessImpl implements Expression {
         return type;
     }
 
+    public void setHints(List<String> hints) {
+        this.hints = hints;
+    }
+
+    public List<String> getHints() {
+        return hints;
+    }
+
     @Override
     public void accept(ExpressionVisitor visitor) {
         visitor.visit(this);
@@ -100,6 +111,6 @@ public class ImpalaHint extends ASTNodeAccessImpl implements Expression {
 
     @Override
     public String toString() {
-        return (type != null) ? String.format(type.toString(), value.replaceAll("\\s", "").toUpperCase()) : "";
+        return (type != null) ? String.format(type.toString(), value.replaceAll("[^\\S\\r\\n]", "").toUpperCase()) : "";
     }
 }

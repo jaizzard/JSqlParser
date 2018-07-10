@@ -333,6 +333,35 @@ TOKEN : /* Numeric Constants */
   |     < #HEX_VALUE: ["0"-"9","A"-"F"]  >
 }
 
+TOKEN:
+{
+    <IMPALA_SHUFFLE: "SHUFFLE">
+|   <IMPALA_BROADCAST: "BROADCAST">
+|   <IMPALA_SCHEDULE_CACHE_LOCAL: "SCHEDULE_CACHE_LOCAL">
+|   <IMPALA_SCHEDULE_DISK_LOCAL: "SCHEDULE_DISK_LOCAL">
+|   <IMPALA_SCHEDULE_REMOTE_LOCAL: "SCHEDULE_REMOTE_LOCAL">
+|   <IMPALA_RANDOM_REPLICA: "RANDOM_REPLICA">
+}
+
+TOKEN:
+{
+    <IMPALA_HINTS: "+"
+        ((<IMPALA_SHUFFLE> | <IMPALA_BROADCAST>)
+        |
+        (
+            (<IMPALA_SCHEDULE_CACHE_LOCAL> | <IMPALA_SCHEDULE_DISK_LOCAL> | <IMPALA_SCHEDULE_REMOTE_LOCAL>)
+            ("," <IMPALA_RANDOM_REPLICA>)?
+        ))
+    >
+
+}
+
+TOKEN:
+{
+    <IMPALA_LINE_HINT: "--" (<WHITESPACE>)* <IMPALA_HINTS> (<WHITESPACE>)* (["\r", "\n"])*>
+|   <IMPALA_MULTILINE_HINT: "/*" (<WHITESPACE>)* <IMPALA_HINTS> (<WHITESPACE>)* "*/" >
+}
+
 SPECIAL_TOKEN:
 {
    < LINE_COMMENT: "--"(~["\r","\n"])*>
@@ -1490,6 +1519,7 @@ FromItem FromItem():
     Alias alias = null;
     MySQLIndexHint indexHint = null;
     ImpalaHint impalaHint = null;
+    Token tk = null;
 }
 {
     (
@@ -1529,11 +1559,11 @@ FromItem FromItem():
                 }
             ]
 
-            { impalaHint = getImpalaHint();
-                if (fromItem instanceof Table)
-                  ((Table) fromItem).setImpalaHint(impalaHint);
-            }
-
+            [
+                (tk = <IMPALA_LINE_HINT>
+                    |   tk = <IMPALA_MULTILINE_HINT>)
+                { impalaHint = new ImpalaHint(); impalaHint.setComment(tk.image); ((Table) fromItem).setImpalaHint(impalaHint); }
+            ]
         )
     )
     {
@@ -1642,6 +1672,7 @@ Join JoinerExpression() #JoinerExpression:
     Column tableColumn;
     List<Column> columns = null;
     ImpalaHint impalaHint = null;
+    Token tk = null;
 }
 {
     [
@@ -1668,9 +1699,11 @@ Join JoinerExpression() #JoinerExpression:
 
     ( <K_JOIN> | "," { join.setSimple(true); } )
 
-    { impalaHint = getImpalaHint();
-        join.setImpalaHint(impalaHint);
-    }
+    [
+        (tk = <IMPALA_LINE_HINT>
+        |   tk = <IMPALA_MULTILINE_HINT>)
+        { impalaHint = new ImpalaHint(); impalaHint.setComment(tk.image); join.setImpalaHint(impalaHint); }
+    ]
 
     right=FromItem()
 
