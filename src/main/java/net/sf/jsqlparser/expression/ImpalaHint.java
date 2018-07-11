@@ -23,8 +23,6 @@ package net.sf.jsqlparser.expression;
 
 import net.sf.jsqlparser.parser.ASTNodeAccessImpl;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,7 +30,9 @@ public class ImpalaHint extends ASTNodeAccessImpl implements Expression {
     private String value = "";
     private Type type = null;
 
-    private List<String> hints = new ArrayList<>();
+    public ImpalaHint(String hintComment) {
+        setComment(hintComment);
+    }
 
     public enum Type {
         SINGLE_LINE(Pattern.compile("--\\s*\\+\\s*([^\\W\\n\\r]+(\\,[^\\W\\n\\r]+)*)"), "-- +%s\n"),
@@ -50,29 +50,16 @@ public class ImpalaHint extends ASTNodeAccessImpl implements Expression {
             return pattern.matcher(text);
         }
 
-        public static Type matchedType(String text) {
-            for (Type type : Type.values()) {
-                if (type.match(text).find()) {
-                    return type;
-                }
-            }
-            return null;
-        }
-
         @Override
         public String toString() {
             return format;
         }
     }
 
-    public static boolean isHintMatch(String comment) {
-        return Type.matchedType(comment) != null;
-    }
-
-    public final void setComment(String comment) {
+    public final void setComment(String hintComment) {
         Matcher m;
         for (Type type : Type.values()) {
-            if ((m = type.match(comment)).find()) {
+            if ((m = type.match(hintComment)).find()) {
                 this.type = type;
                 this.value = m.group(1);
                 break;
@@ -94,14 +81,6 @@ public class ImpalaHint extends ASTNodeAccessImpl implements Expression {
 
     public Type getType() {
         return type;
-    }
-
-    public void setHints(List<String> hints) {
-        this.hints = hints;
-    }
-
-    public List<String> getHints() {
-        return hints;
     }
 
     @Override
