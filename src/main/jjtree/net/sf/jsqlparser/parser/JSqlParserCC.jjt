@@ -281,8 +281,11 @@ TOKEN: /* SQL Keywords. prefixed with K_ to avoid name clashes */
 |   <K_UPDATE:"UPDATE">
 |   <K_UPSERT:"UPSERT">
 |   <K_USE : "USE">
+|   <K_REPEATABLE: "REPEATABLE">
 |   <K_SQL_CALC_FOUND_ROWS: "SQL_CALC_FOUND_ROWS">
 |   <K_SQL_NO_CACHE: "SQL_NO_CACHE">
+|   <K_SYSTEM: "SYSTEM">
+|   <K_TABLESAMPLE: "TABLESAMPLE">
 |   <K_USING:"USING">
 |   <K_UNSIGNED:"UNSIGNED">
 |   <K_VALIDATE : "VALIDATE">
@@ -339,21 +342,20 @@ TOKEN:
 |   <IMPALA_BROADCAST: "BROADCAST">
 |   <IMPALA_SCHEDULE_CACHE_LOCAL: "SCHEDULE_CACHE_LOCAL">
 |   <IMPALA_SCHEDULE_DISK_LOCAL: "SCHEDULE_DISK_LOCAL">
-|   <IMPALA_SCHEDULE_REMOTE_LOCAL: "SCHEDULE_REMOTE_LOCAL">
+|   <IMPALA_SCHEDULE_REMOTE: "SCHEDULE_REMOTE">
 |   <IMPALA_RANDOM_REPLICA: "RANDOM_REPLICA">
 }
 
 TOKEN:
 {
-    <IMPALA_HINTS: "+"
-        ((<IMPALA_SHUFFLE> | <IMPALA_BROADCAST>)
-        |
+    <IMPALA_HINTS: "+" (
+        (<IMPALA_SHUFFLE> | <IMPALA_BROADCAST>)
+    |
         (
-            (<IMPALA_SCHEDULE_CACHE_LOCAL> | <IMPALA_SCHEDULE_DISK_LOCAL> | <IMPALA_SCHEDULE_REMOTE_LOCAL>)
+            (<IMPALA_SCHEDULE_CACHE_LOCAL> | <IMPALA_SCHEDULE_DISK_LOCAL> | <IMPALA_SCHEDULE_REMOTE>)
             ("," <IMPALA_RANDOM_REPLICA>)?
-        ))
-    >
-
+        )
+    )>
 }
 
 TOKEN:
@@ -1367,6 +1369,67 @@ String Identifier():
     { return tk.image; }
 }
 
+ImpalaHint ImpalaHint():
+{
+    ImpalaHint impalaHint = null;
+    String hintComment = null;
+}
+{
+    hintComment = ImpalaHintImage() {
+        impalaHint = new ImpalaHint(hintComment);
+    }
+
+    { return impalaHint; }
+}
+
+String ImpalaHintImage():
+{
+    Token tk = null;
+}
+{
+    (
+        tk = <IMPALA_LINE_HINT>
+    |   tk = <IMPALA_MULTILINE_HINT>
+    )
+    { return tk.image; }
+}
+
+JAVACODE
+String imapalaValidate(Token tk, long lower, long upper)
+{
+    if (tk == null) {
+        return null;
+    }
+    long parsed = Long.parseLong(tk.image);
+
+    if (parsed >= lower && parsed <= upper)
+        return tk.image;
+
+    return null;
+}
+
+TableSample TableSample():
+{
+    Token tk = null;
+    Token samplingMethod = null;
+	String samplingMethodparam = null;
+	String repeatableSeed = null;
+	List<String> params = new ArrayList<String>();
+}
+{
+    (<K_TABLESAMPLE> (samplingMethod = <K_SYSTEM>))
+    "("
+    (tk = <S_LONG> { samplingMethodparam = imapalaValidate(tk, 0L, 100L); params.add(samplingMethodparam); })
+    ")"
+    [
+       (<K_REPEATABLE> "(" (tk = <S_LONG> { repeatableSeed = imapalaValidate(tk, 1L, Long.MAX_VALUE); }) ")")
+    ]
+
+	{
+		return new TableSample(samplingMethod.image, params, repeatableSeed);
+	}
+}
+
 FunctionItem FunctionItem():
 {
     Alias alias = null;
@@ -1519,7 +1582,7 @@ FromItem FromItem():
     Alias alias = null;
     MySQLIndexHint indexHint = null;
     ImpalaHint impalaHint = null;
-    Token tk = null;
+    TableSample tableSample = null;
 }
 {
     (
@@ -1560,9 +1623,21 @@ FromItem FromItem():
             ]
 
             [
-                (tk = <IMPALA_LINE_HINT>
-                    |   tk = <IMPALA_MULTILINE_HINT>)
-                { impalaHint = new ImpalaHint(); impalaHint.setComment(tk.image); ((Table) fromItem).setImpalaHint(impalaHint); }
+                LOOKAHEAD(2)
+                impalaHint = ImpalaHint() {
+                    if (fromItem instanceof Table) {
+                        ((Table) fromItem).setImpalaHint(impalaHint);
+                    }
+                }
+            ]
+
+            [
+                LOOKAHEAD(2)
+                tableSample = TableSample() {
+                    if (fromItem instanceof Table) {
+                        ((Table) fromItem).setTableSample(tableSample);
+                    }
+                }
             ]
         )
     )
@@ -1672,7 +1747,6 @@ Join JoinerExpression() #JoinerExpression:
     Column tableColumn;
     List<Column> columns = null;
     ImpalaHint impalaHint = null;
-    Token tk = null;
 }
 {
     [
@@ -1700,9 +1774,10 @@ Join JoinerExpression() #JoinerExpression:
     ( <K_JOIN> | "," { join.setSimple(true); } )
 
     [
-        (tk = <IMPALA_LINE_HINT>
-        |   tk = <IMPALA_MULTILINE_HINT>)
-        { impalaHint = new ImpalaHint(); impalaHint.setComment(tk.image); join.setImpalaHint(impalaHint); }
+        LOOKAHEAD(2)
+        impalaHint = ImpalaHint() {
+            join.setImpalaHint(impalaHint);
+        }
     ]
 
     right=FromItem()
@@ -1997,23 +2072,6 @@ OracleHint getOracleHint() {
     // Check if it matches Hint pattern?
     if (OracleHint.isHintMatch(tok.image)) {
       hint = new OracleHint();
-      hint.setComment(tok.image);
-    }
-  }
-  return hint;
-}
-
-JAVACODE
-ImpalaHint getImpalaHint() {
-  ImpalaHint hint = null;
-  Token tok = getToken(1);
-  // Retrieve first comment (if any) prior next token
-  if (tok.specialToken != null) {
-    tok = tok.specialToken;
-    while (tok.specialToken != null) tok = tok.specialToken;
-    // Check if it matches Hint pattern?
-    if (ImpalaHint.isHintMatch(tok.image)) {
-      hint = new ImpalaHint();
       hint.setComment(tok.image);
     }
   }
